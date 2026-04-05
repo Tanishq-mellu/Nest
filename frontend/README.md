@@ -14,6 +14,18 @@ The OWASP Nest frontend is a modern web application built with [Next.js](https:/
 | **Mapping**       | Leaflet / React Leaflet            |
 | **Testing**       | Jest (unit/a11y), Playwright (e2e) |
 
+## Frontend Features
+
+The OWASP Nest frontend provides an interactive interface for exploring the OWASP ecosystem and its contributors. Key capabilities include:
+
+- **Project Discovery** – Browse OWASP projects and explore their details.
+- **Contributor Profiles** – View contributor activity across OWASP repositories.
+- **GitHub Integration** – Fetch contributor and repository data using GitHub APIs.
+- **Interactive UI** – Modern responsive interface built with Next.js and TailwindCSS.
+- **Community Visibility** – Helps highlight active contributors and project maintainers across the OWASP ecosystem.
+
+The frontend communicates with the backend services through GraphQL APIs and renders contributor and project data in an easy-to-navigate interface.
+
 ## Directory Structure
 
 The frontend code lives in this directory. Key directories include:
