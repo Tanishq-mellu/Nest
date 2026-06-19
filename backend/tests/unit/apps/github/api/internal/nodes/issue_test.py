@@ -173,7 +173,7 @@ class TestIssueNode(GraphQLNodeBaseTest):
         """Test task_deadline field when mapping exists with issue deadline."""
         expected_date = datetime(2025, 10, 26, tzinfo=UTC)
         mock_issue = Mock()
-        mock_issue.number = 123
+        mock_issue.id = 123
 
         mock_info = Mock()
         mock_info.context = Mock()
@@ -186,7 +186,7 @@ class TestIssueNode(GraphQLNodeBaseTest):
     def test_task_deadline_with_bulk_load_mapping_no_deadline(self):
         """Test task_deadline field when mapping exists but issue not in mapping."""
         mock_issue = Mock()
-        mock_issue.number = 123
+        mock_issue.id = 123
 
         mock_info = Mock()
         mock_info.context = Mock()
