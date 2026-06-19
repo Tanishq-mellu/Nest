@@ -103,6 +103,8 @@ class Module(ExperienceLevel, MatchingAttributes, StartEndRange, TimestampedMode
             self.started_at = self.started_at or self.program.started_at
             self.ended_at = self.ended_at or self.program.ended_at
 
+        self.key = slugify(self.name)
+
         if not self.pk and self.program:
             with transaction.atomic():
                 max_order = (
@@ -112,6 +114,6 @@ class Module(ExperienceLevel, MatchingAttributes, StartEndRange, TimestampedMode
                     .get("max_order")
                 )
                 self.order = (max_order or 0) + 1
-
-        self.key = slugify(self.name)
-        super().save(*args, **kwargs)
+                super().save(*args, **kwargs)
+        else:
+            super().save(*args, **kwargs)

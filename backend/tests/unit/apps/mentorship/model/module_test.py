@@ -190,9 +190,12 @@ class TestModulePureMocks:
         mock_module.order = Module._meta.get_field("order").default
         assert mock_module.order == 0
 
+    @patch("django.db.transaction.atomic")
     @patch("apps.common.models.TimestampedModel.save")
     @patch("apps.mentorship.models.Module.objects")
-    def test_save_auto_assigns_order_for_new_module(self, mock_objects, mock_super_save):
+    def test_save_auto_assigns_order_for_new_module(
+        self, mock_objects, mock_super_save, mock_atomic
+    ):
         """Test that new modules get order = max(existing) + 1."""
         mock_module = MagicMock(spec=Module)
         mock_module.pk = None
@@ -212,16 +215,21 @@ class TestModulePureMocks:
             2024, 12, 31, tzinfo=django.utils.timezone.UTC
         )
 
-        mock_objects.filter.return_value.aggregate.return_value = {"max_order": 3}
+        mock_objects.filter.return_value.select_for_update.return_value.aggregate.return_value = {
+            "max_order": 3
+        }
 
         Module.save(mock_module)
 
         assert mock_module.order == 4
         mock_super_save.assert_called_once()
 
+    @patch("django.db.transaction.atomic")
     @patch("apps.common.models.TimestampedModel.save")
     @patch("apps.mentorship.models.Module.objects")
-    def test_save_auto_assigns_order_1_for_first_module(self, mock_objects, mock_super_save):
+    def test_save_auto_assigns_order_1_for_first_module(
+        self, mock_objects, mock_super_save, mock_atomic
+    ):
         """Test that the first module in a program gets order = 1."""
         mock_module = MagicMock(spec=Module)
         mock_module.pk = None
@@ -241,7 +249,9 @@ class TestModulePureMocks:
             2024, 12, 31, tzinfo=django.utils.timezone.UTC
         )
 
-        mock_objects.filter.return_value.aggregate.return_value = {"max_order": None}
+        mock_objects.filter.return_value.select_for_update.return_value.aggregate.return_value = {
+            "max_order": None
+        }
 
         Module.save(mock_module)
 
