@@ -24,6 +24,12 @@ MERGED_PULL_REQUESTS_PREFETCH = Prefetch(
     to_attr="merged_pull_requests",
 )
 
+PULL_REQUESTS_ORDERED_PREFETCH = Prefetch(
+    "pull_requests",
+    queryset=PullRequest.objects.order_by("-created_at"),
+    to_attr="ordered_pull_requests",
+)
+
 MAX_LIMIT = 1000
 
 
@@ -44,16 +50,15 @@ class IssueNode(strawberry.relay.Node):
     assignees: list[UserNode] = strawberry_django.field()
     author: UserNode | None = strawberry_django.field()
 
-    @strawberry_django.field(prefetch_related=["pull_requests"])
-    def pull_requests(self, limit: int = 4, offset: int = 0) -> list[PullRequestNode]:
+    @strawberry_django.field(prefetch_related=[PULL_REQUESTS_ORDERED_PREFETCH])
+    def pull_requests(self, root: Issue, limit: int = 4, offset: int = 0) -> list[PullRequestNode]:
         """Return pull requests linked to this issue."""
         if (normalized_limit := normalize_limit(limit, MAX_LIMIT)) is None:
             return []
 
         offset = max(0, offset)
-        return list(
-            self.pull_requests.all().order_by("-created_at")[offset : offset + normalized_limit]
-        )
+        ordered_prs = getattr(root, "ordered_pull_requests", [])
+        return list(ordered_prs[offset : offset + normalized_limit])
 
     @strawberry_django.field(select_related=["repository__organization", "repository"])
     def organization_name(self, root: Issue) -> str | None:
