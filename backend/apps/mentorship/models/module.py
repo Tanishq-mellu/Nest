@@ -1,10 +1,6 @@
 """Module model for the Mentorship app."""
 
 from __future__ import annotations
-
-from django.db import models
-from django.db.models import Q
-
 from apps.common.models import TimestampedModel
 from apps.common.utils import slugify
 from apps.mentorship.models.common import (
@@ -120,13 +116,17 @@ class Module(ExperienceLevel, MatchingAttributes, StartEndRange, TimestampedMode
             self.started_at = self.started_at or self.program.started_at
             self.ended_at = self.ended_at or self.program.ended_at
 
-        if not self.pk and self.program:
-            max_order = (
-                Module.objects.filter(program=self.program)
-                .aggregate(max_order=models.Max("order"))
-                .get("max_order")
-            )
-            self.order = (max_order or 0) + 1
-
         self.key = slugify(self.name)
-        super().save(*args, **kwargs)
+
+        if not self.pk and self.program:
+            with transaction.atomic():
+                max_order = (
+                    Module.objects.filter(program=self.program)
+                    .select_for_update()
+                    .aggregate(max_order=models.Max("order"))
+                    .get("max_order")
+                )
+                self.order = (max_order or 0) + 1
+                super().save(*args, **kwargs)
+        else:
+            super().save(*args, **kwargs)

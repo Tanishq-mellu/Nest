@@ -93,26 +93,26 @@ class ModuleNode:
         # BULK load data
         deadline_rows = (
             Task.objects.filter(module=self, deadline_at__isnull=False)
-            .order_by("issue__number", "-assigned_at")
-            .values("issue__number", "deadline_at")
+            .order_by("issue_id", "-assigned_at")
+            .values("issue_id", "deadline_at")
         )
         assigned_rows = (
             Task.objects.filter(module=self, assigned_at__isnull=False)
-            .order_by("issue__number", "-assigned_at")
-            .values("issue__number", "assigned_at")
+            .order_by("issue_id", "-assigned_at")
+            .values("issue_id", "assigned_at")
         )
 
         deadline_map = {}
         assigned_map = {}
 
         for row in deadline_rows:
-            num = row["issue__number"]
-            if num not in deadline_map:
-                deadline_map[num] = row["deadline_at"]
+            issue_id = row["issue_id"]
+            if issue_id not in deadline_map:
+                deadline_map[issue_id] = row["deadline_at"]
         for row in assigned_rows:
-            num = row["issue__number"]
-            if num not in assigned_map:
-                assigned_map[num] = row["assigned_at"]
+            issue_id = row["issue_id"]
+            if issue_id not in assigned_map:
+                assigned_map[issue_id] = row["assigned_at"]
 
         info.context.task_deadlines_by_issue = deadline_map
         info.context.task_assigned_at_by_issue = assigned_map
@@ -187,15 +187,17 @@ class ModuleNode:
     @strawberry.field
     def task_deadline(self, info: Info, issue_number: int) -> datetime | None:
         """Return the deadline for the latest assigned task linked to this module and issue."""
+        issue = self.issues.filter(number=issue_number).first()
+        if not issue:
+            return None
+
         mapping = getattr(info.context, "task_deadlines_by_issue", None)
         if mapping is not None:
-            return mapping.get(issue_number)
+            return mapping.get(issue.id)
 
-        # fallback (single issue query)
         return (
             Task.objects.filter(
-                module=self,
-                issue__number=issue_number,
+                issue=issue,
                 deadline_at__isnull=False,
             )
             .order_by("-assigned_at")
@@ -206,14 +208,17 @@ class ModuleNode:
     @strawberry.field
     def task_assigned_at(self, info: Info, issue_number: int) -> datetime | None:
         """Return the latest assignment time for tasks linked to this module and issue."""
+        issue = self.issues.filter(number=issue_number).first()
+        if not issue:
+            return None
+
         mapping = getattr(info.context, "task_assigned_at_by_issue", None)
         if mapping is not None:
-            return mapping.get(issue_number)
+            return mapping.get(issue.id)
 
         return (
             Task.objects.filter(
-                module=self,
-                issue__number=issue_number,
+                issue=issue,
                 assigned_at__isnull=False,
             )
             .order_by("-assigned_at")
